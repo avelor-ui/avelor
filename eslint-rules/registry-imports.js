@@ -13,7 +13,10 @@ const EXACT = new Set([
   "@/lib/utils",
 ])
 
-const PREFIXES = ["@/components/ui/", "@/registry/lib/", "./"]
+// The CLI only rewrites `@/registry/<segment>/lib/*` to the consumer's lib
+// alias; `@/registry/lib/*` has no segment and lands on `@/components/*`
+// (shadcn 4.22.1, verified in plan 001 step 6).
+const PREFIXES = ["@/components/ui/", "@/registry/avelor/lib/", "./"]
 
 /** @param {string} source */
 export function isAllowed(source) {
@@ -31,7 +34,7 @@ export const registryImports = {
     schema: [],
     messages: {
       forbidden:
-        "'{{source}}' cannot be imported inside registry/. Allowed: react, react-dom, next/link, next/image, lucide-react, motion/react, @/components/ui/*, @/lib/utils, @/registry/lib/* and ./ files in the same folder (CLAUDE.md rules 5 and 6).",
+        "'{{source}}' cannot be imported inside registry/. Allowed: react, react-dom, next/link, next/image, lucide-react, motion/react, @/components/ui/*, @/lib/utils, @/registry/avelor/lib/* and ./ files in the same folder (CLAUDE.md rules 5 and 6).",
     },
   },
   create(context) {

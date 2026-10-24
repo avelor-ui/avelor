@@ -31,7 +31,7 @@ tester.run("registry-imports", registryImports, {
     `import { m, LazyMotion, domAnimation } from "motion/react"`,
     `import { Button } from "@/components/ui/button"`,
     `import { cn } from "@/lib/utils"`,
-    `import { reveal } from "@/registry/lib/motion"`,
+    `import { reveal } from "@/registry/avelor/lib/motion"`,
     `import { content } from "./content"`,
     `export { content } from "./content"`,
     `export * from "./content"`,
@@ -62,6 +62,10 @@ tester.run("registry-imports", registryImports, {
     {
       code: `import { Button } from "@/registry/blocks/hero-01/hero-01"`,
       errors: [forbidden("@/registry/blocks/hero-01/hero-01")],
+    },
+    {
+      code: `import { reveal } from "@/registry/lib/motion"`,
+      errors: [forbidden("@/registry/lib/motion")],
     },
     {
       code: `import { cva } from "class-variance-authority"`,
