@@ -7,6 +7,7 @@ const baseURL = `http://localhost:${port}`
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
+  workers: 2,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
