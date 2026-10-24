@@ -19,6 +19,7 @@
 # generated registry output
 /registry-out/
 /lib/registry/*.generated.ts
+/.source/
 
 # misc
 .DS_Store
