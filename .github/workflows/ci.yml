@@ -27,6 +27,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm registry:build
+      - run: pnpm registry:check
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm test
@@ -56,3 +58,53 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      registry: ${{ steps.filter.outputs.registry }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            registry:
+              - 'registry/**'
+              - 'registry.json'
+              - 'scripts/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'components.json'
+              - 'tsconfig.json'
+              - 'next.config.ts'
+              - 'eslint.config.mjs'
+              - '.github/workflows/**'
+
+  smoke:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.registry == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        base: [base, radix]
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm registry:build
+      - run: pnpm registry:smoke --base ${{ matrix.base }}

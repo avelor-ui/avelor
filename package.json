@@ -5,11 +5,14 @@
   "private": true,
   "packageManager": "pnpm@12.15.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm registry:build && next build",
+    "registry:build": "node scripts/registry-build.ts",
+    "registry:check": "node scripts/registry-check.ts",
+    "registry:smoke": "node scripts/registry-smoke.ts",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
@@ -36,6 +39,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.64.1",
+    "@shadcn/registry": "0.2.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
