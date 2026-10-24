@@ -1,0 +1,42 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "avelor",
+  "homepage": "https://avelorui.dev",
+  "items": [
+    {
+      "name": "sample-01",
+      "type": "registry:block",
+      "title": "Internal sample (not for production use)",
+      "description": "Internal sample — one section that proves the Avelor pipeline end to end: logical properties, English and Arabic content, Intl formatting and a reduced-motion-safe reveal. Not a product block.",
+      "meta": { "hidden": true, "internal": true },
+      "registryDependencies": ["button"],
+      "dependencies": ["motion", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/avelor/blocks/sample-01/sample-01.tsx",
+          "type": "registry:block",
+          "target": "@components/blocks/sample-01/sample-01.tsx"
+        },
+        {
+          "path": "registry/avelor/blocks/sample-01/sample-01-motion.tsx",
+          "type": "registry:block",
+          "target": "@components/blocks/sample-01/sample-01-motion.tsx"
+        },
+        {
+          "path": "registry/avelor/blocks/sample-01/content.ts",
+          "type": "registry:block",
+          "target": "@components/blocks/sample-01/content.ts"
+        },
+        {
+          "path": "registry/avelor/lib/motion.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/avelor/lib/format.ts",
+          "type": "registry:lib"
+        }
+      ],
+      "docs": "Avelor blocks read direction from the document. Set <html lang dir> for the page language and wrap your app in a DirectionProvider: npx shadcn@latest add direction"
+    }
+  ]
+}
