@@ -58,6 +58,44 @@ async function revealAll(page: Page) {
   await waitForReveals(page)
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+// Blocks never use a positive tabindex, so DOM order is the only correct Tab
+// order. Each visible focusable inside <main> is numbered in that order and
+// Tab must land on 0, 1, 2… then leave the block.
+async function walkWithTab(page: Page) {
+  const count = await page.evaluate((selector) => {
+    const list = [...document.querySelectorAll<HTMLElement>(`main :is(${selector})`)].filter(
+      (el) => el.checkVisibility()
+    )
+    list.forEach((el, i) => el.setAttribute("data-kb-stop", String(i)))
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    return list.length
+  }, FOCUSABLE)
+
+  for (let i = 0; i < count; i++) {
+    await page.keyboard.press("Tab")
+    const landedOn = await page.evaluate(
+      () => document.activeElement?.getAttribute("data-kb-stop") ?? document.activeElement?.tagName
+    )
+    expect(landedOn, `Tab ${i + 1} skipped focusable ${i}`).toBe(String(i))
+    const focusRing = await page.evaluate(() => {
+      const style = getComputedStyle(document.activeElement as Element)
+      return (
+        (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
+        style.boxShadow !== "none"
+      )
+    })
+    expect(focusRing, `stop ${i} has no visible focus indicator`).toBe(true)
+  }
+
+  await page.keyboard.press("Tab")
+  const trapped = await page.evaluate(() => document.activeElement?.closest("main") !== null)
+  expect(trapped, "focus stays inside the block after its last stop").toBe(false)
+  return count
+}
+
 async function expectNoAxeViolations(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -99,6 +137,39 @@ for (const name of blocks) {
           fullPage: true,
           animations: "disabled",
         })
+      })
+    }
+
+    for (const dir of ["ltr", "rtl"] as const) {
+      test(`keyboard walk ${dir}`, async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 })
+        await openPreview(page, name, { lang: dir === "rtl" ? "ar" : "en", dir, theme: "light" })
+        await revealAll(page)
+        const stops = await walkWithTab(page)
+
+        const button = page.locator("main button:not([disabled])").first()
+        const link = page.locator("main a[href]").first()
+        const hasButton = (await button.count()) > 0
+        const hasLink = (await link.count()) > 0
+
+        if (hasButton) {
+          await button.evaluate((el) =>
+            el.addEventListener("click", () => el.setAttribute("data-kb-clicked", "true"), {
+              once: true,
+            })
+          )
+          await button.focus()
+          await page.keyboard.press("Space")
+          await expect(button).toHaveAttribute("data-kb-clicked", "true")
+        }
+        // Last, because Enter may leave the page.
+        if (hasLink) {
+          await link.focus()
+          await Promise.all([page.waitForEvent("framenavigated"), page.keyboard.press("Enter")])
+        }
+        if (!hasButton && !hasLink) {
+          expect(stops).toBe(0)
+        }
       })
     }
 
