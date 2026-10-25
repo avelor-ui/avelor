@@ -31,3 +31,5 @@ export function registryResponse(body: unknown): Response {
     },
   })
 }
+
+// probe: smoke path filter (throwaway branch)
