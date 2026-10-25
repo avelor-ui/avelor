@@ -30,6 +30,18 @@ async function openPreview(page: Page, name: string, query: Record<string, strin
   await page.evaluate(() => document.fonts.ready)
 }
 
+async function waitForReveals(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>("[data-reveal]")].every(
+          (el) => getComputedStyle(el).opacity === "1"
+        )
+      )
+    )
+    .toBe(true)
+}
+
 // whileInView reveals below the fold only fire once they are scrolled into view.
 async function revealAll(page: Page) {
   await page.evaluate(async () => {
@@ -43,15 +55,7 @@ async function revealAll(page: Page) {
     await new Promise((r) => requestAnimationFrame(() => r(null)))
     window.scrollTo(0, 0)
   })
-  await expect
-    .poll(() =>
-      page.evaluate(() =>
-        [...document.querySelectorAll<HTMLElement>("[data-reveal]")].every(
-          (el) => getComputedStyle(el).opacity === "1"
-        )
-      )
-    )
-    .toBe(true)
+  await waitForReveals(page)
 }
 
 async function expectNoAxeViolations(page: Page) {
@@ -77,6 +81,25 @@ for (const name of blocks) {
           })
         }
       }
+    }
+
+    // Reduced motion must land on the exact pixels the animated run ends on,
+    // with nothing scrolled into view: every reveal shows at once.
+    for (const lang of langs) {
+      test(`reduced motion equals the final state ${lang}`, async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 })
+        await openPreview(page, name, {
+          lang,
+          dir: dirForLang(lang),
+          theme: "light",
+          motion: "reduced",
+        })
+        await waitForReveals(page)
+        await expect(page).toHaveScreenshot([name, `${lang}-light-1280.png`], {
+          fullPage: true,
+          animations: "disabled",
+        })
+      })
     }
 
     for (const [lang, theme] of [
