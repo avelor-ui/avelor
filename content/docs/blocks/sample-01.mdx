@@ -4,4 +4,18 @@ description: One section that proves the Avelor pipeline end to end. Not a produ
 hidden: true
 ---
 
-Internal sample block. The live preview, generated code and install command arrive with the docs preview work in plan 001, step 10.
+<BlockPreview name="sample-01" />
+
+## What flips in RTL
+
+- The section mirrors as a whole: text aligns to the start edge, the stat column moves to the opposite side and its accent border sits on the start side (`border-s-2`, `ps-6`).
+- The arrow icon in the call to action is marked `data-rtl="flip"` and mirrors with `rtl:-scale-x-100`.
+- Numbers are formatted with `Intl.NumberFormat` for the selected locale; Arabic keeps Western digits.
+
+## Reduced motion behaviour
+
+The entrance reveal runs once when the section scrolls into view. With `prefers-reduced-motion: reduce`, or with the Motion control set to Reduced, the final state renders immediately with no transition. Without JavaScript the content is fully visible through a `noscript` style.
+
+## Install
+
+Switch to the Code tab above for the install command and the exact files that land in your project.
