@@ -114,15 +114,48 @@ test("install command targets the registry route for this block", async ({
 test.describe("phone viewport", () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test("defaults to the 360 frame and keeps the controls reachable", async ({
+  test("defaults to the 360 frame and every control group is keyboard-operable", async ({
     page,
   }) => {
     await page.goto(`${pagePath}?theme=light`)
     await expect(frame(page)).toHaveAttribute("width", "360")
     await expect(page).not.toHaveURL(/width=/)
-    await expect(page.getByRole("button", { name: "Reduced" })).toBeVisible()
-    await page.getByRole("button", { name: "Reduced" }).click()
+
+    const tabTo = async (group: string, name: string) => {
+      const button = page
+        .getByRole("group", { name: group })
+        .getByRole("button", { name, exact: true })
+      for (let i = 0; i < 40; i++) {
+        await page.keyboard.press("Tab")
+        if (await button.evaluate((el) => el === document.activeElement)) return button
+      }
+      throw new Error(`Tab never reached "${name}" in the ${group} group`)
+    }
+
+    await page.getByRole("tab", { name: "Playground" }).focus()
+
+    const arabic = await tabTo("Language", "العربية")
+    await page.keyboard.press("Enter")
+    await expect(arabic).toHaveAttribute("aria-pressed", "true")
+    await expect(frame(page)).toHaveAttribute("src", /lang=ar&dir=rtl/)
+
+    const dark = await tabTo("Theme", "Dark")
+    await page.keyboard.press("Space")
+    await expect(dark).toHaveAttribute("aria-pressed", "true")
+    await expect(frame(page)).toHaveAttribute("src", /theme=dark/)
+
+    const wide = await tabTo("Width", "768")
+    await page.keyboard.press("Enter")
+    await expect(wide).toHaveAttribute("aria-pressed", "true")
+    await expect(frame(page)).toHaveAttribute("width", "768")
+
+    const reduced = await tabTo("Motion", "Reduced")
+    await page.keyboard.press("Space")
+    await expect(reduced).toHaveAttribute("aria-pressed", "true")
     await expect(frame(page)).toHaveAttribute("src", /motion=reduced/)
+    for (const pair of ["lang=ar", "theme=dark", "width=768", "motion=reduced"]) {
+      await expect(page).toHaveURL(new RegExp(`[?&]${pair}(&|$)`))
+    }
   })
 })
 

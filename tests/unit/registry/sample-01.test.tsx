@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
 
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, within } from "@testing-library/react"
 import { MotionConfig } from "motion/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -77,16 +77,27 @@ describe("sample-01 content", () => {
 })
 
 describe("sample-01 reduced motion", () => {
-  it("shows the final state without animating", async () => {
+  async function nextFrame() {
+    await act(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+    )
+  }
+
+  it("jumps to the final state with a zero-duration transition", async () => {
     const { container } = render(
       <MotionConfig reducedMotion="always">
         <SampleOne />
       </MotionConfig>
     )
-    const reveal = container.querySelector<HTMLElement>(
-      "[data-reveal]"
-    )
+    const reveal = container.querySelector<HTMLElement>("[data-reveal]")
     expect(reveal).not.toBeNull()
-    await waitFor(() => expect(reveal!.style.opacity).toBe("1"))
+
+    // The animated path fades over `revealTransition.duration` (350 ms); the
+    // reduced path uses `instant` and lands in the first animation frame. Two
+    // frames (about 32 ms in jsdom) is well inside the animated fade.
+    await nextFrame()
+    await nextFrame()
+    expect(reveal!.style.opacity).toBe("1")
+    expect(reveal!.style.transform).toBe("none")
   })
 })

@@ -64,22 +64,20 @@ describe("recordRegistryFetch", () => {
     })
   })
 
-  it("swallows network failures and non-2xx responses", async () => {
-    const rejecting = vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))
-    await expect(
-      recordRegistryFetch("sample-01", request("shadcn"), {
-        fetch: rejecting,
-        websiteId: "site-id",
-      })
-    ).resolves.toBeUndefined()
-
-    const failing = vi.fn().mockResolvedValue(new Response(null, { status: 500 }))
-    await expect(
-      recordRegistryFetch("sample-01", request("shadcn"), {
-        fetch: failing,
-        websiteId: "site-id",
-      })
-    ).resolves.toBeUndefined()
+  describe.each([
+    ["a 4xx response", vi.fn().mockResolvedValue(new Response(null, { status: 403 }))],
+    ["a 500 response", vi.fn().mockResolvedValue(new Response(null, { status: 500 }))],
+    ["a network error", vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))],
+  ])("after %s", (_label, fetch) => {
+    it("resolves without throwing and does not retry", async () => {
+      await expect(
+        recordRegistryFetch("sample-01", request("shadcn"), {
+          fetch,
+          websiteId: "site-id",
+        })
+      ).resolves.toBeUndefined()
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
   })
 
   it("gives up after the timeout", async () => {

@@ -36,7 +36,10 @@ beforeEach(() => {
 })
 
 describe("GET /r/[file]", () => {
-  it("serves a known item as uncached JSON and counts it after the response", async () => {
+  // `after` is mocked here, so this proves only that the task is scheduled
+  // through it; that it runs after the response was sent is plan 001 V9
+  // (real run on `next start` and on Vercel).
+  it("serves a known item as uncached JSON and schedules the analytics task through after()", async () => {
     const response = await get("sample-01.json")
 
     expect(response.status).toBe(200)
