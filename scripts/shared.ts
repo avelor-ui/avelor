@@ -17,6 +17,8 @@ export type RegistryItemSource = {
   type: string
   categories?: string[]
   meta?: Record<string, unknown>
+  dependencies?: string[]
+  registryDependencies?: string[]
   files: RegistryFile[]
 }
 
