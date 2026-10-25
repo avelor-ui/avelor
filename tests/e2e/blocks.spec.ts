@@ -63,16 +63,22 @@ const FOCUSABLE =
 
 // Blocks never use a positive tabindex, so DOM order is the only correct Tab
 // order. Each visible focusable inside <main> is numbered in that order and
-// Tab must land on 0, 1, 2… then leave the block.
+// Tab must land on 0, 1, 2… then leave the block. The focus indicator is
+// judged against the element's resting style: a shadow it already had
+// unfocused is not an indicator, and neither is an invisible ring.
 async function walkWithTab(page: Page) {
-  const count = await page.evaluate((selector) => {
+  const resting = await page.evaluate((selector) => {
     const list = [...document.querySelectorAll<HTMLElement>(`main :is(${selector})`)].filter(
       (el) => el.checkVisibility()
     )
     list.forEach((el, i) => el.setAttribute("data-kb-stop", String(i)))
     ;(document.activeElement as HTMLElement | null)?.blur()
-    return list.length
+    return list.map((el) => {
+      const style = getComputedStyle(el)
+      return { outline: style.outline, boxShadow: style.boxShadow }
+    })
   }, FOCUSABLE)
+  const count = resting.length
 
   for (let i = 0; i < count; i++) {
     await page.keyboard.press("Tab")
@@ -80,14 +86,37 @@ async function walkWithTab(page: Page) {
       () => document.activeElement?.getAttribute("data-kb-stop") ?? document.activeElement?.tagName
     )
     expect(landedOn, `Tab ${i + 1} skipped focusable ${i}`).toBe(String(i))
-    const focusRing = await page.evaluate(() => {
-      const style = getComputedStyle(document.activeElement as Element)
-      return (
-        (style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0) ||
-        style.boxShadow !== "none"
-      )
-    })
-    expect(focusRing, `stop ${i} has no visible focus indicator`).toBe(true)
+    // Polled because the ring may transition in over a few frames.
+    const focusRing = () =>
+      page.evaluate((before) => {
+        // Only layers that draw something count: a transparent colour or an
+        // all-zero geometry (a 0px ring) paints nothing.
+        const visibleLayers = (boxShadow: string) =>
+          boxShadow === "none"
+            ? ""
+            : boxShadow
+                .split(/,(?![^(]*\))/)
+                .filter((layer) => {
+                  const alpha =
+                    layer.match(/\/\s*([\d.]+)\)/) ?? layer.match(/rgba\([^)]*,\s*([\d.]+)\)/)
+                  if (alpha && parseFloat(alpha[1]) === 0) return false
+                  return [...layer.matchAll(/(-?[\d.]+)px/g)].some((m) => parseFloat(m[1]) !== 0)
+                })
+                .join(",")
+        const style = getComputedStyle(document.activeElement as Element)
+        const outlineVisible = style.outlineStyle !== "none" && parseFloat(style.outlineWidth) > 0
+        const shadowNow = visibleLayers(style.boxShadow)
+        return (
+          (outlineVisible && style.outline !== before.outline) ||
+          (shadowNow !== "" && shadowNow !== visibleLayers(before.boxShadow))
+        )
+      }, resting[i])
+    await expect
+      .poll(focusRing, {
+        message: `stop ${i} has no visible focus indicator`,
+        timeout: 2000,
+      })
+      .toBe(true)
   }
 
   await page.keyboard.press("Tab")
