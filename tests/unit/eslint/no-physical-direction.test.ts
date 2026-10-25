@@ -154,8 +154,28 @@ tester.run("needs-rtl-counterpart", needsRtlCounterpart, {
     `const a = "bg-linear-to-r rtl:bg-linear-to-l from-primary"`,
     `const a = "translate-y-2 space-y-4 divide-y bg-linear-to-t"`,
     `const a = "group-hover:translate-x-1 rtl:group-hover:-translate-x-1"`,
+    `const a = "translate-x-2 rtl:translate-x-2"`,
+    `const a = "divide-x-2 rtl:divide-x-reverse"`,
+    `const a = "bg-gradient-to-r rtl:bg-gradient-to-l"`,
+    `const a = "translate-x-2 rtl:-translate-x-2 space-x-4 rtl:space-x-reverse"`,
   ],
   invalid: [
+    {
+      code: `const a = "translate-x-2 rtl:rotate-180"`,
+      errors: [{ messageId: "counterpart", data: { token: "translate-x-2" } }],
+    },
+    {
+      code: `const a = "translate-x-2 rtl:space-x-reverse"`,
+      errors: [{ messageId: "counterpart", data: { token: "translate-x-2" } }],
+    },
+    {
+      code: `const a = "translate-x-2 rtl:-translate-x-2 space-x-4"`,
+      errors: [{ messageId: "counterpart", data: { token: "space-x-4" } }],
+    },
+    {
+      code: `const a = "bg-linear-to-r rtl:bg-gradient-to-l"`,
+      errors: [{ messageId: "counterpart", data: { token: "bg-linear-to-r" } }],
+    },
     {
       code: `const a = "translate-x-2"`,
       errors: [{ messageId: "counterpart", data: { token: "translate-x-2" } }],
