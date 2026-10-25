@@ -21,7 +21,7 @@ async function frameParams(page: Page) {
 
 async function expectRevealed(page: Page) {
   await expect(
-    page.frameLocator("iframe[title$='theme']").locator("[data-sample-01-reveal]")
+    page.frameLocator("iframe[title$='theme']").locator("[data-reveal]")
   ).toHaveCSS("opacity", "1")
 }
 

@@ -84,7 +84,7 @@ describe("sample-01 reduced motion", () => {
       </MotionConfig>
     )
     const reveal = container.querySelector<HTMLElement>(
-      "[data-sample-01-reveal]"
+      "[data-reveal]"
     )
     expect(reveal).not.toBeNull()
     await waitFor(() => expect(reveal!.style.opacity).toBe("1"))

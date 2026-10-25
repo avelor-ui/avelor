@@ -4,6 +4,11 @@ const isCI = Boolean(process.env.CI)
 const port = process.env.PORT ?? "3000"
 const baseURL = `http://localhost:${port}`
 
+// Baselines are rendered on Linux only (the Screenshots workflow); any other
+// platform would produce different anti-aliasing and font metrics.
+export const screenshotsIgnored =
+  process.platform !== "linux" && !process.env.AVELOR_SCREENSHOTS
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -11,6 +16,11 @@ export default defineConfig({
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
   reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
+  snapshotPathTemplate: "screenshots/blocks/{arg}{ext}",
+  ignoreSnapshots: screenshotsIgnored,
+  expect: {
+    toHaveScreenshot: { maxDiffPixelRatio: 0.01 },
+  },
   use: {
     baseURL,
     trace: "retain-on-failure",

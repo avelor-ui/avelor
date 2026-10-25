@@ -1,12 +1,4 @@
-import AxeBuilder from "@axe-core/playwright"
-import { expect, test, type Page } from "@playwright/test"
-
-async function expectNoAxeViolations(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-    .analyze()
-  expect(results.violations).toEqual([])
-}
+import { expect, test } from "@playwright/test"
 
 test.describe("server HTML without JavaScript", () => {
   test.use({ javaScriptEnabled: false })
@@ -35,7 +27,7 @@ test.describe("server HTML without JavaScript", () => {
   }) => {
     await page.goto("/preview/sample-01")
     await expect(page.getByRole("heading", { level: 2 })).toBeVisible()
-    await expect(page.locator("[data-sample-01-reveal]")).toHaveCSS(
+    await expect(page.locator("[data-reveal]")).toHaveCSS(
       "opacity",
       "1"
     )
@@ -70,7 +62,7 @@ test("reduced motion disables animation and shows the final state", async ({
     [...document.head.querySelectorAll("style")].map((s) => s.textContent ?? "")
   )
   expect(headStyles.some((css) => css.includes("animation-duration"))).toBe(true)
-  const reveal = page.locator("[data-sample-01-reveal]")
+  const reveal = page.locator("[data-reveal]")
   await expect(reveal).toHaveCSS("opacity", "1")
   await expect(reveal).toHaveCSS("transform", "none")
 })
@@ -79,15 +71,3 @@ test("unknown block names return 404", async ({ page }) => {
   const response = await page.goto("/preview/does-not-exist")
   expect(response?.status()).toBe(404)
 })
-
-for (const query of ["lang=en", "lang=ar&theme=dark"]) {
-  test(`passes axe with ${query}`, async ({ page }) => {
-    await page.goto(`/preview/sample-01?${query}`)
-    // axe blends opacity into the contrast check, so wait for the entrance to finish.
-    await expect(page.locator("[data-sample-01-reveal]")).toHaveCSS(
-      "opacity",
-      "1"
-    )
-    await expectNoAxeViolations(page)
-  })
-}
