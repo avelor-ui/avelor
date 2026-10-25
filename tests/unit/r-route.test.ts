@@ -4,10 +4,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { registryCatalog, registryItems } from "@/lib/registry/items.generated"
 
 const afterTasks: Array<() => unknown> = []
+const after = vi.fn((task: () => unknown) => {
+  afterTasks.push(task)
+})
 vi.mock("next/server", () => ({
-  after: (task: () => unknown) => {
-    afterTasks.push(task)
-  },
+  after: (task: () => unknown) => after(task),
 }))
 
 const recordRegistryFetch = vi.fn<() => Promise<void>>()
@@ -29,6 +30,7 @@ function get(file: string, userAgent = "shadcn") {
 
 beforeEach(() => {
   afterTasks.length = 0
+  after.mockClear()
   recordRegistryFetch.mockReset()
   recordRegistryFetch.mockResolvedValue(undefined)
 })
@@ -74,5 +76,16 @@ describe("GET /r/[file]", () => {
     expect(await response.json()).toEqual(registryItems["sample-01"])
 
     await expect(afterTasks[0]()).rejects.toThrow("gateway down")
+  })
+
+  it("still serves the item when after() itself throws", async () => {
+    after.mockImplementationOnce(() => {
+      throw new Error("`after` was called outside a request scope")
+    })
+
+    const response = await get("sample-01.json")
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(registryItems["sample-01"])
+    expect(afterTasks).toHaveLength(0)
   })
 })
