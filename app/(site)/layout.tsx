@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import "../globals.css"
 import { RootProvider } from "fumadocs-ui/provider/next"
 
+import { Analytics } from "@/components/analytics"
 import { ThemeProvider } from "@/components/theme-provider"
 import { DirectionProvider } from "@/components/ui/direction"
 import { fontVariables } from "@/lib/fonts"
@@ -32,6 +33,7 @@ export default function SiteLayout({
             <RootProvider theme={{ enabled: false }}>{children}</RootProvider>
           </DirectionProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )

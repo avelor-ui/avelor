@@ -1,15 +1,17 @@
-// Installs every registry item from the local build output into a fresh
-// shadcn app for each requested base (Base UI and Radix) and typechecks it.
+// Installs every registry item from the built site (`next start`, so the real
+// /r/[file] route is exercised) into a fresh shadcn app for each requested base
+// (Base UI and Radix) and typechecks it. Needs `pnpm build` first.
 //
 //   node scripts/registry-smoke.ts [--base base|radix] [--keep]
 
+import { spawn, type ChildProcess } from "node:child_process"
 import fs from "node:fs"
-import http from "node:http"
+import net from "node:net"
 import os from "node:os"
 import path from "node:path"
 import { parseArgs } from "node:util"
 
-import { readRegistryJson, registryOutDir, run, shadcnBin } from "./shared.ts"
+import { readRegistryJson, repoRoot, run, shadcnBin } from "./shared.ts"
 
 const { values } = parseArgs({
   options: {
@@ -19,32 +21,58 @@ const { values } = parseArgs({
 })
 const bases = values.base?.length ? values.base : ["base", "radix"]
 
-if (!fs.existsSync(registryOutDir)) {
-  console.error("registry-out/ is missing; run `pnpm registry:build` first")
+if (!fs.existsSync(path.join(repoRoot, ".next", "BUILD_ID"))) {
+  console.error(".next/ is missing; run `pnpm build` first")
   process.exit(1)
 }
 
 const items = readRegistryJson().items.map((item) => item.name)
 
-let userAgentLogged = false
-const server = http.createServer((req, res) => {
-  if (!userAgentLogged) {
-    userAgentLogged = true
-    console.log(`CLI User-Agent: ${req.headers["user-agent"] ?? "(none)"}`)
+async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer()
+    probe.on("error", reject)
+    probe.listen(0, "127.0.0.1", () => {
+      const address = probe.address()
+      if (!address || typeof address === "string") {
+        reject(new Error("no port"))
+        return
+      }
+      probe.close(() => resolve(address.port))
+    })
+  })
+}
+
+async function waitFor(url: string, attempts = 60): Promise<void> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const response = await fetch(url)
+      if (response.ok) return
+    } catch {
+      // not listening yet
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500))
   }
-  const match = /^\/r\/([\w.-]+\.json)$/.exec(req.url ?? "")
-  const file = match ? path.join(registryOutDir, match[1]) : null
-  if (!file || !fs.existsSync(file)) {
-    res.writeHead(404).end()
-    return
+  throw new Error(`${url} did not come up`)
+}
+
+function stop(child: ChildProcess): void {
+  if (child.exitCode !== null || !child.pid) return
+  if (process.platform === "win32") {
+    spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { stdio: "ignore" })
+  } else {
+    child.kill("SIGTERM")
   }
-  res.writeHead(200, { "content-type": "application/json" })
-  fs.createReadStream(file).pipe(res)
+}
+
+const port = await freePort()
+const origin = `http://127.0.0.1:${port}`
+const nextBin = path.join(repoRoot, "node_modules", "next", "dist", "bin", "next")
+const site = spawn(process.execPath, [nextBin, "start", "-p", String(port)], {
+  cwd: repoRoot,
+  stdio: ["ignore", "inherit", "inherit"],
 })
-await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
-const address = server.address()
-if (!address || typeof address === "string") throw new Error("no port")
-const origin = `http://127.0.0.1:${address.port}`
+await waitFor(`${origin}/r/registry.json`)
 
 const workDir = fs.mkdtempSync(path.join(os.tmpdir(), "avelor-smoke-"))
 console.log(`Scratch apps in ${workDir}`)
@@ -82,7 +110,7 @@ try {
   failed = true
   console.error(error instanceof Error ? error.message : error)
 } finally {
-  server.close()
+  stop(site)
   if (values.keep || failed) {
     console.log(`Kept ${workDir}`)
   } else {

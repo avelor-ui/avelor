@@ -106,5 +106,5 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm registry:build
+      - run: pnpm build
       - run: pnpm registry:smoke --base ${{ matrix.base }}
