@@ -5,10 +5,9 @@ import { act, render, screen, within } from "@testing-library/react"
 import { MotionConfig } from "motion/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import SampleOne from "@/registry/avelor/blocks/sample-01/sample-01"
-import { content } from "@/registry/avelor/blocks/sample-01/content"
+import HeroOne from "@/registry/avelor/blocks/hero-01/hero-01"
+import { content } from "@/registry/avelor/blocks/hero-01/content"
 
-const easternDigits = /[٠-٩]/
 const directions = ["ltr", "rtl"] as const
 const locales = ["en", "ar"] as const
 
@@ -23,12 +22,12 @@ afterEach(() => {
   consoleError.mockRestore()
 })
 
-describe.each(directions)("sample-01 under dir=%s", (dir) => {
+describe.each(directions)("hero-01 under dir=%s", (dir) => {
   it.each(locales)("renders the %s content", (locale) => {
     const t = content[locale]
     const { container } = render(
       <div dir={dir}>
-        <SampleOne locale={locale} />
+        <HeroOne locale={locale} />
       </div>
     )
 
@@ -36,25 +35,34 @@ describe.each(directions)("sample-01 under dir=%s", (dir) => {
     expect(section.tagName).toBe("SECTION")
     expect(section.closest("[dir]")).toHaveAttribute("dir", dir)
 
-    const heading = within(section).getByRole("heading", { level: 2 })
-    expect(heading).toHaveTextContent(t.title)
+    const headings = within(section).getAllByRole("heading")
+    expect(headings).toHaveLength(1)
+    expect(headings[0]).toBe(within(section).getByRole("heading", { level: 1 }))
+    expect(headings[0]).toHaveTextContent(t.title)
     expect(within(section).getByText(t.eyebrow)).toBeInTheDocument()
     expect(within(section).getByText(t.description)).toBeInTheDocument()
-    expect(within(section).getByText(t.stat.label)).toBeInTheDocument()
 
-    const button = within(section).getByRole("button", { name: t.ctaLabel })
-    const icon = button.querySelector("svg")
+    const links = within(section).getAllByRole("link")
+    expect(links).toHaveLength(2)
+    const [primary, secondary] = links
+    expect(primary).toHaveAccessibleName(t.primaryCta.label)
+    expect(primary).toHaveAttribute("href", t.primaryCta.href)
+    expect(secondary).toHaveAccessibleName(t.secondaryCta.label)
+    expect(secondary).toHaveAttribute("href", t.secondaryCta.href)
+
+    const icon = primary.querySelector("svg")
     expect(icon).toHaveAttribute("aria-hidden", "true")
     expect(icon).toHaveAttribute("data-rtl", "flip")
     expect(icon).toHaveClass("rtl:-scale-x-100")
+    expect(secondary.querySelector("svg")).toBeNull()
 
-    const stat = container.querySelector("dd")
-    expect(stat).toHaveTextContent("1,280")
-    expect(stat?.textContent).not.toMatch(easternDigits)
+    const frames = container.querySelectorAll('div[aria-hidden="true"][data-rtl="flip"]')
+    expect(frames).toHaveLength(1)
+    expect(frames[0].querySelector("a, button, img")).toBeNull()
   })
 })
 
-describe("sample-01 content", () => {
+describe("hero-01 content", () => {
   it("has the same shape in en and ar", () => {
     const shape = (value: unknown): unknown =>
       value && typeof value === "object"
@@ -69,35 +77,36 @@ describe("sample-01 content", () => {
 
   it("is marked PLACEHOLDER", () => {
     const source = readFileSync(
-      path.resolve("registry/avelor/blocks/sample-01/content.ts"),
+      path.resolve("registry/avelor/blocks/hero-01/content.ts"),
       "utf8"
     )
     expect(source.startsWith("/* PLACEHOLDER */")).toBe(true)
   })
 })
 
-describe("sample-01 reduced motion", () => {
+describe("hero-01 reduced motion", () => {
   async function nextFrame() {
     await act(
       () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
     )
   }
 
-  it("jumps to the final state with a zero-duration transition", async () => {
+  it("shows every reveal in its final state at once", async () => {
     const { container } = render(
       <MotionConfig reducedMotion="always">
-        <SampleOne />
+        <HeroOne />
       </MotionConfig>
     )
-    const reveal = container.querySelector<HTMLElement>("[data-reveal]")
-    expect(reveal).not.toBeNull()
+    const reveals = [...container.querySelectorAll<HTMLElement>("[data-reveal]")]
+    expect(reveals).toHaveLength(5)
 
-    // The animated path fades over `revealTransition.duration` (350 ms); the
-    // reduced path uses `instant` and lands in the first animation frame. Two
-    // frames (about 32 ms in jsdom) is well inside the animated fade.
+    // The animated path delays the last text reveal by 210 ms before a 350 ms
+    // fade; the reduced path uses `instant` and lands in the first frame.
     await nextFrame()
     await nextFrame()
-    expect(reveal!.style.opacity).toBe("1")
-    expect(reveal!.style.transform).toBe("none")
+    for (const reveal of reveals) {
+      expect(reveal.style.opacity).toBe("1")
+      expect(reveal.style.transform).toBe("none")
+    }
   })
 })
