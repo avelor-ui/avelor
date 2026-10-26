@@ -134,3 +134,7 @@
     @apply font-sans;
     }
 }
+/* Fumadocs caps the docs grid at 97rem and centres it, which leaves empty bands beside the sidebar and the table of contents on wide screens. */
+#nd-docs-layout {
+  --fd-layout-width: 100vw;
+}
