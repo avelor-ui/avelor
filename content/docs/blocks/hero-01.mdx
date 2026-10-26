@@ -1,0 +1,27 @@
+---
+title: Hero 01
+description: A hero with a headline, a supporting line, two call-to-action links and a placeholder product frame, designed in English and Arabic.
+---
+
+<BlockPreview name="hero-01" />
+
+## What flips in RTL
+
+- The two columns swap sides on wide screens: the text sits on the start side and the product frame on the end side, through grid flow alone.
+- All text aligns to the start edge, and the call-to-action links keep their reading order, so the primary link comes first in both languages.
+- The arrow in the primary link is marked `data-rtl="flip"` and mirrors with `rtl:-scale-x-100`.
+- The placeholder frame mirrors as a whole (`data-rtl="flip"`): its bars start at the start edge and the tinted action pill sits at the end (`ms-auto`). Nothing in it is transformed.
+
+## Reduced motion behaviour
+
+On load, the eyebrow, heading, paragraph and links reveal one after another (a short upward fade, about half a second in total), and the frame reveals with the heading. Only vertical movement is used, so the entrance is the same in both directions. With `prefers-reduced-motion: reduce`, or with the Motion control set to Reduced, everything renders in its final state immediately. Without JavaScript the content is fully visible through a `noscript` style.
+
+## Customise
+
+- The link targets live in `content.ts` (`#get-started`, `#demo`); point them at your own pages.
+- Replace the placeholder frame with your product image.
+- The heading is an `h1`, so use one hero per page.
+
+## Install
+
+Switch to the Code tab above for the install command and the exact files that land in your project.

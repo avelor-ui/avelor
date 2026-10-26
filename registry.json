@@ -37,6 +37,38 @@
         }
       ],
       "docs": "Avelor blocks read direction from the document. Set <html lang dir> for the page language and wrap your app in a DirectionProvider: npx shadcn@latest add direction"
+    },
+    {
+      "name": "hero-01",
+      "type": "registry:block",
+      "title": "Hero 01",
+      "description": "A hero section with a headline, a supporting line, two call-to-action links and a placeholder product frame, designed for English and Arabic, with a staggered entrance that respects reduced motion.",
+      "categories": ["hero"],
+      "meta": { "publishedAt": "2026-10-26" },
+      "registryDependencies": ["button"],
+      "dependencies": ["motion", "lucide-react"],
+      "files": [
+        {
+          "path": "registry/avelor/blocks/hero-01/hero-01.tsx",
+          "type": "registry:block",
+          "target": "@components/blocks/hero-01/hero-01.tsx"
+        },
+        {
+          "path": "registry/avelor/blocks/hero-01/hero-01-motion.tsx",
+          "type": "registry:block",
+          "target": "@components/blocks/hero-01/hero-01-motion.tsx"
+        },
+        {
+          "path": "registry/avelor/blocks/hero-01/content.ts",
+          "type": "registry:block",
+          "target": "@components/blocks/hero-01/content.ts"
+        },
+        {
+          "path": "registry/avelor/lib/motion.ts",
+          "type": "registry:lib"
+        }
+      ],
+      "docs": "Avelor blocks read direction from the document. Set <html lang dir> for the page language and wrap your app in a DirectionProvider: npx shadcn@latest add direction"
     }
   ]
 }
