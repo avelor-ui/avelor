@@ -33,7 +33,7 @@ export default function HeroOne({
           <HeroOneReveal step={1}>
             <h1
               id={headingId}
-              className="mt-6 max-w-[20ch] text-4xl leading-tight font-bold text-balance md:text-5xl lg:text-6xl"
+              className="mt-6 max-w-[20ch] text-4xl leading-snug font-bold text-balance md:text-5xl lg:text-6xl"
             >
               {t.title}
             </h1>
