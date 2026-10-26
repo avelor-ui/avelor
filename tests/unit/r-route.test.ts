@@ -40,18 +40,18 @@ describe("GET /r/[file]", () => {
   // through it; that it runs after the response was sent is plan 001 V9
   // (real run on `next start` and on Vercel).
   it("serves a known item as uncached JSON and schedules the analytics task through after()", async () => {
-    const response = await get("sample-01.json")
+    const response = await get("hero-01.json")
 
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toMatch(/^application\/json/)
     expect(response.headers.get("cache-control")).toBe("no-store")
-    expect(await response.json()).toEqual(registryItems["sample-01"])
+    expect(await response.json()).toEqual(registryItems["hero-01"])
 
     expect(recordRegistryFetch).not.toHaveBeenCalled()
     expect(afterTasks).toHaveLength(1)
     await afterTasks[0]()
     expect(recordRegistryFetch).toHaveBeenCalledWith(
-      "sample-01",
+      "hero-01",
       expect.objectContaining({ headers: expect.anything() })
     )
   })
@@ -66,17 +66,17 @@ describe("GET /r/[file]", () => {
 
   it("returns 404 for unknown items and non-json paths", async () => {
     expect((await get("nope.json")).status).toBe(404)
-    expect((await get("sample-01")).status).toBe(404)
-    expect((await get("sample-01.json.map")).status).toBe(404)
+    expect((await get("hero-01")).status).toBe(404)
+    expect((await get("hero-01.json.map")).status).toBe(404)
     expect(afterTasks).toHaveLength(0)
   })
 
   it("resolves the response even when analytics rejects", async () => {
     recordRegistryFetch.mockRejectedValue(new Error("gateway down"))
 
-    const response = await get("sample-01.json")
+    const response = await get("hero-01.json")
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(registryItems["sample-01"])
+    expect(await response.json()).toEqual(registryItems["hero-01"])
 
     await expect(afterTasks[0]()).rejects.toThrow("gateway down")
   })
@@ -86,9 +86,9 @@ describe("GET /r/[file]", () => {
       throw new Error("`after` was called outside a request scope")
     })
 
-    const response = await get("sample-01.json")
+    const response = await get("hero-01.json")
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(registryItems["sample-01"])
+    expect(await response.json()).toEqual(registryItems["hero-01"])
     expect(afterTasks).toHaveLength(0)
   })
 })

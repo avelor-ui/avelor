@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test, type Page } from "@playwright/test"
 
-const pagePath = "/docs/blocks/sample-01"
+const pagePath = "/docs/blocks/hero-01"
 
 async function expectNoAxeViolations(page: Page) {
   const results = await new AxeBuilder({ page })
@@ -20,9 +20,11 @@ async function frameParams(page: Page) {
 }
 
 async function expectRevealed(page: Page) {
-  await expect(
-    page.frameLocator("iframe[title$='theme']").locator("[data-reveal]")
-  ).toHaveCSS("opacity", "1")
+  const reveals = page.frameLocator("iframe[title$='theme']").locator("[data-reveal]")
+  await expect(reveals.first()).toBeAttached()
+  for (const reveal of await reveals.all()) {
+    await expect(reveal).toHaveCSS("opacity", "1")
+  }
 }
 
 test("Code mode shows the Arabic section and Playground keeps the 360 frame", async ({
@@ -37,8 +39,8 @@ test("Code mode shows the Arabic section and Playground keeps the 360 frame", as
   const contentPanel = page.getByRole("tabpanel", { name: "content.ts" })
   const highlighted = contentPanel.locator(".highlighted")
   await expect(highlighted.first()).toContainText("ar: {")
-  await expect(highlighted.filter({ hasText: "نموذج داخلي" })).toHaveCount(1)
-  await expect(highlighted.filter({ hasText: "Internal sample" })).toHaveCount(0)
+  await expect(highlighted.filter({ hasText: "جديد: تذكير تلقائي بالمدفوعات" })).toHaveCount(1)
+  await expect(highlighted.filter({ hasText: "New: automatic payment reminders" })).toHaveCount(0)
 
   await page.getByRole("tab", { name: "Playground" }).click()
   await expect(page).toHaveURL(/lang=ar/)
@@ -108,7 +110,7 @@ test("install command targets the registry route for this block", async ({
   page,
 }) => {
   await page.goto(`${pagePath}?mode=code&theme=light`)
-  await expect(page.getByText(/npx shadcn@latest add .*\/r\/sample-01\.json/)).toBeVisible()
+  await expect(page.getByText(/npx shadcn@latest add .*\/r\/hero-01\.json/)).toBeVisible()
 })
 
 test.describe("phone viewport", () => {
