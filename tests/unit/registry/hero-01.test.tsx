@@ -56,9 +56,9 @@ describe.each(directions)("hero-01 under dir=%s", (dir) => {
     expect(icon).toHaveClass("rtl:-scale-x-100")
     expect(secondary.querySelector("svg")).toBeNull()
 
-    const frame = container.querySelector('div[aria-hidden="true"]')
-    expect(frame).toHaveAttribute("data-rtl", "flip")
-    expect(frame!.querySelector("a, button, img")).toBeNull()
+    const frames = container.querySelectorAll('div[aria-hidden="true"][data-rtl="flip"]')
+    expect(frames).toHaveLength(1)
+    expect(frames[0].querySelector("a, button, img")).toBeNull()
   })
 })
 

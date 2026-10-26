@@ -65,7 +65,7 @@ export default function HeroOne({
               href={t.secondaryCta.href}
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "h-10"
+                "h-10 px-5"
               )}
             >
               {t.secondaryCta.label}
@@ -79,7 +79,7 @@ export default function HeroOne({
             data-rtl="flip"
             className="rounded-3xl border bg-muted/50 p-3"
           >
-            <div className="rounded-2xl border bg-card p-4 shadow-sm md:p-6">
+            <div className="rounded-xl border bg-card p-4 shadow-sm md:p-6">
               <div className="flex items-center gap-3">
                 <div className="size-8 rounded-full bg-muted" />
                 <div className="h-2.5 w-24 rounded-full bg-muted" />
