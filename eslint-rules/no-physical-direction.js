@@ -31,8 +31,22 @@ const PHYSICAL = [
 
 const DEPRECATED = /^(start|end)-/
 
-const X_AXIS =
-  /^(translate-x-|space-x-|divide-x-|bg-linear-to-[lr](-|$)|bg-gradient-to-[lr](-|$))/
+// An x-axis utility is mirrored only by an `rtl:` twin of the same family;
+// `rtl:rotate-180` next to `translate-x-2` is not a counterpart. Whether the
+// twin's value actually mirrors is out of scope for a string heuristic.
+const X_AXIS_FAMILIES = [
+  ["translate-x", /^translate-x-/],
+  ["space-x", /^space-x-/],
+  ["divide-x", /^divide-x(-|$)/],
+  ["bg-linear-to-x", /^bg-linear-to-[lr](-|$)/],
+  ["bg-gradient-to-x", /^bg-gradient-to-[lr](-|$)/],
+]
+
+/** @param {string} root */
+function xAxisFamily(root) {
+  const hit = X_AXIS_FAMILIES.find(([, pattern]) => pattern.test(root))
+  return hit ? hit[0] : null
+}
 
 /**
  * Splits a class token into its variant list and utility root. Colons inside
@@ -145,18 +159,20 @@ export const needsRtlCounterpart = {
     schema: [],
     messages: {
       counterpart:
-        "'{{token}}' does not mirror in RTL; add an 'rtl:' counterpart in the same class string.",
+        "'{{token}}' does not mirror in RTL; add an 'rtl:' counterpart of the same utility in the same class string.",
     },
   },
   create(context) {
     return stringVisitor((text, node) => {
       const list = tokens(text)
-      const mirrored = list.some(
-        (token) => token.variants.includes("rtl") && X_AXIS.test(token.root)
-      )
-      if (mirrored) return
+      const mirrored = new Set()
       for (const token of list) {
-        if (X_AXIS.test(token.root)) {
+        if (token.variants.includes("rtl")) mirrored.add(xAxisFamily(token.root))
+      }
+      for (const token of list) {
+        if (token.variants.includes("rtl")) continue
+        const family = xAxisFamily(token.root)
+        if (family && !mirrored.has(family)) {
           context.report({
             node,
             messageId: "counterpart",

@@ -21,7 +21,7 @@ export function SampleOneReveal({
   return (
     <LazyMotion features={domAnimation} strict>
       <m.div
-        data-sample-01-reveal=""
+        data-reveal=""
         className={className}
         variants={reveal}
         initial="hidden"
@@ -34,7 +34,7 @@ export function SampleOneReveal({
       </m.div>
       {/* The server renders the hidden state; without JavaScript nothing would ever reveal it. */}
       <noscript>
-        <style>{`[data-sample-01-reveal]{opacity:1!important;transform:none!important}`}</style>
+        <style>{`[data-reveal]{opacity:1!important;transform:none!important}`}</style>
       </noscript>
     </LazyMotion>
   )

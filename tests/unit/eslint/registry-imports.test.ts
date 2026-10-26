@@ -55,6 +55,7 @@ tester.run("registry-imports", registryImports, {
       errors: [forbidden("next/navigation")],
     },
     { code: `import { cn } from "cn"`, errors: [forbidden("cn")] },
+    { code: `import "tailwindcss"`, errors: [forbidden("tailwindcss")] },
     {
       code: `import { Button } from "../ui/button"`,
       errors: [forbidden("../ui/button")],

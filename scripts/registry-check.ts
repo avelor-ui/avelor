@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url"
 import { registryItemSchema, registrySchema } from "@shadcn/registry/schema"
 
 import { shapeDiff } from "./content-shape.ts"
+import { dependencyProblems } from "./registry-deps.ts"
 import {
   readRegistryJson,
   registryNamespace,
@@ -90,6 +91,16 @@ async function checkItem(item: RegistryItemSource) {
         fail(`${label}: ${file.path} needs target "${expected}", has "${file.target ?? "none"}"`)
       }
     }
+  }
+
+  const sources = item.files
+    .filter((file) => exists(file.path))
+    .map((file) => ({
+      path: file.path,
+      source: fs.readFileSync(path.join(repoRoot, file.path), "utf8"),
+    }))
+  for (const problem of dependencyProblems({ ...item, files: sources })) {
+    fail(`${label}: ${problem}`)
   }
 
   if (item.meta?.internal !== true && !(item.categories && item.categories.length > 0)) {

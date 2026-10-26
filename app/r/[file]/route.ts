@@ -15,7 +15,11 @@ export async function GET(request: Request, { params }: Context) {
   }
   if (resolved.kind === "item") {
     const { name } = resolved
-    after(() => recordRegistryFetch(name, request))
+    // Counting must never cost a delivery: `after` throws outside a request
+    // scope, and a future Next change must not reach the response either.
+    try {
+      after(() => recordRegistryFetch(name, request))
+    } catch {}
   }
   return registryResponse(resolved.body)
 }
